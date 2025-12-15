@@ -24,6 +24,18 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
+const brandImages = {
+  Biossance: 'https://images.unsplash.com/photo-1676803704299-b59cd8fecb7d?auto=format&fit=crop&q=80&w=1200',
+  'ILIA Beauty': 'https://iliabeauty.com/cdn/shop/files/WEB-About_Us-_Image_Update_2025-0.jpg?v=1738871646&width=1500',
+  'Youth To The People': 'https://blogscdn.thehut.net/app/uploads/sites/1778/2021/12/Blog-700x400_0007_YouthToThePeople_BOTM_3StepSuperfoodStarterKit_HighRes_1638532910.jpg',
+  default: 'https://images.unsplash.com/photo-1506617420156-8e4536971650?auto=format&fit=crop&q=80&w=1200'
+};
+
+function withBrandImage(brand) {
+  const image_url = brand.image_url || brandImages[brand.name] || brandImages.default;
+  return { ...brand, image_url };
+}
+
 const sampleBrands = [
   {
     id: 1,
@@ -58,6 +70,7 @@ async function getBrands({ limit = 6, offset = 0 } = {}) {
     const totalResult = await client.query('SELECT COUNT(*) AS count FROM brands;');
     const result = await client.query(
       `SELECT b.id, b.name, b.summary, b.packaging, b.price_tier,
+              b.image_url,
               COALESCE(array_agg(c.name ORDER BY c.name) FILTER (WHERE c.name IS NOT NULL), '{}') AS certifications
        FROM brands b
        LEFT JOIN brand_certifications bc ON bc.brand_id = b.id
@@ -78,7 +91,7 @@ async function getBrandById(id) {
   const client = await pool.connect();
   try {
     const result = await client.query(
-      `SELECT b.id, b.name, b.summary, b.packaging, b.price_tier, b.website, b.country,
+      `SELECT b.id, b.name, b.summary, b.packaging, b.price_tier, b.website, b.country, b.image_url,
               COALESCE(array_agg(c.name ORDER BY c.name) FILTER (WHERE c.name IS NOT NULL), '{}') AS certifications
        FROM brands b
        LEFT JOIN brand_certifications bc ON bc.brand_id = b.id
@@ -230,7 +243,8 @@ function validateBrandInput(body) {
 app.get('/', async (req, res, next) => {
   try {
     const { rows } = await getBrands({ limit: 3, offset: 0 });
-    res.render('home', { brands: rows });
+    const brands = rows.map(withBrandImage);
+    res.render('home', { brands });
   } catch (err) {
     next(err);
   }
@@ -242,9 +256,10 @@ app.get('/browse', async (req, res, next) => {
   const offset = (page - 1) * limit;
   try {
     const { rows, total } = await getBrands({ limit, offset });
+    const brands = rows.map(withBrandImage);
     const certCounts = await getCertificationCounts();
     const pageCount = Math.max(1, Math.ceil(total / limit));
-    res.render('browse', { brands: rows, page, pageCount, certCounts });
+    res.render('browse', { brands, page, pageCount, certCounts });
   } catch (err) {
     next(err);
   }

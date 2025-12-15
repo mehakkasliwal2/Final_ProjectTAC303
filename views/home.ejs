@@ -51,7 +51,7 @@
     <div class="brand-list">
       <% brands.forEach(brand => { %>
         <article class="brand-card">
-          <img src="https://images.unsplash.com/photo-1506617420156-8e4536971650?auto=format&fit=crop&q=80&w=774" alt="Skincare visual for <%= brand.name %>">
+          <img src="<%= brand.image_url %>" alt="Skincare visual for <%= brand.name %>">
           <div>
             <h3><%= brand.name %></h3>
             <p><%= brand.summary %></p>
