@@ -1,0 +1,150 @@
+<%- include('partials/head', { pageTitle: 'Browse Brands | Sustainable Beauty Brand Directory', metaDescription: 'Browse the Sustainable Beauty Brand Directory to compare cruelty-free skincare companies by certification, packaging choices, hero products, and price tiers using intuitive filters and trustworthy sourcing notes.' }) %>
+
+<header class="hero" id="top">
+  <%- include('partials/nav', { current: 'browse' }) %>
+  <div class="hero-content">
+    <div class="hero-text">
+      <h1>Browse the library</h1>
+      <p class="lead">Search by certification, packaging style, budget, or hero ingredients to build a routine that matches your values and skin goals.</p>
+      <div class="hero-ctas">
+        <a class="button primary" href="#filters">Use filters</a>
+        <a class="button ghost" href="/submit">Submit a brand</a>
+      </div>
+      <ul class="hero-highlights">
+        <li>58 brands vetted for cruelty-free and ingredient transparency</li>
+        <li>Filters for refill systems, price tiers, and target concerns</li>
+        <li>Downloadable CSV exports coming in Milestone 4</li>
+      </ul>
+    </div>
+    <figure class="hero-media">
+      <img src="https://dam.hollandandbarrettimages.co.uk/default/_raw/a3084076-3311-4892-93d0-0087aa4f60e5/jade-roller-benefits.png?imdensity=1&impolicy=attract&imwidth=1980" alt="Skincare bottles, jade roller, and botanicals arranged on a table">
+    </figure>
+  </div>
+</header>
+
+<main id="main">
+  <section id="filters" class="section">
+    <header>
+      <h2>Filter by what matters to you</h2>
+      <p>Pick a few starting points and the directory will surface brands that match all selected filters.</p>
+    </header>
+    <div class="filter-panel">
+      <article class="filter-group">
+        <h3>Certifications</h3>
+        <ul class="filter-list" data-filter-group="certifications">
+          <li><button class="filter-pill" data-label="EWG Verified">EWG Verified</button></li>
+          <li><button class="filter-pill" data-label="Leaping Bunny">Leaping Bunny</button></li>
+          <li><button class="filter-pill" data-label="B Corp">B Corp</button></li>
+          <li><button class="filter-pill" data-label="Climate Neutral">Climate Neutral</button></li>
+        </ul>
+        <div class="filters-note" data-selected="certifications">Selected: none</div>
+      </article>
+      <article class="filter-group">
+        <h3>Packaging</h3>
+        <ul class="filter-list" data-filter-group="packaging">
+          <li><button class="filter-pill" data-label="Glass">Glass</button></li>
+          <li><button class="filter-pill" data-label="Refill pouch">Refill pouch</button></li>
+          <li><button class="filter-pill" data-label="Aluminum">Aluminum</button></li>
+          <li><button class="filter-pill" data-label="Compostable pump">Compostable pump</button></li>
+        </ul>
+        <div class="filters-note" data-selected="packaging">Selected: none</div>
+      </article>
+      <article class="filter-group">
+        <h3>Budget</h3>
+        <ul class="filter-list" data-filter-group="budget">
+          <li><button class="filter-pill" data-label="$">$</button></li>
+          <li><button class="filter-pill" data-label="$$">$$</button></li>
+          <li><button class="filter-pill" data-label="$$$">$$$</button></li>
+        </ul>
+        <div class="filters-note" data-selected="budget">Selected: none</div>
+      </article>
+      <article class="filter-group">
+        <h3>Skin goals</h3>
+        <ul class="filter-list" data-filter-group="goals">
+          <li><button class="filter-pill" data-label="Barrier repair">Barrier repair</button></li>
+          <li><button class="filter-pill" data-label="Breakout support">Breakout support</button></li>
+          <li><button class="filter-pill" data-label="Hyperpigmentation">Hyperpigmentation</button></li>
+          <li><button class="filter-pill" data-label="Sensitive-safe">Sensitive-safe</button></li>
+        </ul>
+        <div class="filters-note" data-selected="goals">Selected: none</div>
+      </article>
+    </div>
+  </section>
+
+  <section class="section">
+    <header>
+      <h2>Featured directory rows</h2>
+      <p>Every profile blends founder stories, price context, ingredient sources, and verification documents.</p>
+    </header>
+    <div class="brand-list">
+      <% brands.forEach(brand => { %>
+        <article class="brand-card">
+          <img src="https://images.unsplash.com/photo-1506617420156-8e4536971650?auto=format&fit=crop&q=80&w=774" alt="Brand visual for <%= brand.name %>">
+          <div>
+            <h3><%= brand.name %></h3>
+            <p><%= brand.summary %></p>
+            <ul class="brand-meta">
+              <li>Certifications: <%= (brand.certifications || []).join(', ') %></li>
+              <li>Packaging: <%= brand.packaging || 'TBD' %></li>
+              <li>Price tier: <%= brand.price_tier || 'N/A' %></li>
+            </ul>
+            <div class="hero-ctas">
+              <a class="button ghost" href="/brands/<%= brand.id %>/edit">Edit</a>
+              <form method="POST" action="/brands/<%= brand.id %>/delete" style="display:inline;">
+                <button class="button primary" type="submit" onclick="return confirm('Delete this brand?');">Delete</button>
+              </form>
+            </div>
+          </div>
+        </article>
+      <% }) %>
+    </div>
+
+    <div class="pagination" aria-label="Pagination">
+      <% if (pageCount > 1) { %>
+        <% for (let p = 1; p <= pageCount; p++) { %>
+          <a class="button <%= p === page ? 'primary' : 'ghost' %>" href="/browse?page=<%= p %>"><%= p %></a>
+        <% } %>
+      <% } %>
+    </div>
+  </section>
+
+  <section class="section">
+    <header>
+      <h2>Certification snapshot (SQL aggregate)</h2>
+      <p>Brands counted per certification to reveal where the catalog is strongest.</p>
+    </header>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Certification</th>
+          <th>Brand count</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% (certCounts || []).forEach(row => { %>
+          <tr>
+            <td><%= row.name %></td>
+            <td><%= row.count %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </section>
+</main>
+
+<script>
+  // DOM manipulation: track selections per filter group and show "Selected" summaries.
+  document.querySelectorAll('[data-filter-group]').forEach(group => {
+    const groupName = group.dataset.filterGroup;
+    const summary = document.querySelector(`[data-selected=\"${groupName}\"]`);
+    group.addEventListener('click', (e) => {
+      const btn = e.target.closest('button.filter-pill');
+      if (!btn) return;
+      btn.classList.toggle('primary');
+      const labels = Array.from(group.querySelectorAll('button.filter-pill.primary')).map(b => b.dataset.label || b.textContent.trim());
+      if (summary) summary.textContent = labels.length ? `Selected: ${labels.join(', ')}` : 'Selected: none';
+    });
+  });
+</script>
+
+<%- include('partials/footer') %>

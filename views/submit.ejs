@@ -1,0 +1,194 @@
+<%- include('partials/head', { pageTitle: 'Submit a Brand | Sustainable Beauty Brand Directory', metaDescription: 'Submit a sustainable beauty brand to the directory with ingredient documentation, packaging photos, and certification links. Students, founders, and researchers can nominate companies while following our verification checklist for transparent, cruelty-free skincare.' }) %>
+
+<header class="hero" id="top">
+  <%- include('partials/nav', { current: 'submit' }) %>
+  <div class="hero-content">
+    <div class="hero-text">
+      <h1>Submit a sustainable beauty brand</h1>
+      <p class="lead">Share your favorite cruelty-free, low-waste skincare company. We review every submission using ingredient documentation, packaging evidence, and certification links before publishing.</p>
+      <div class="hero-ctas">
+        <a class="button primary" href="#submit-form">Start your submission</a>
+        <a class="button ghost" href="#criteria">See the checklist</a>
+      </div>
+      <ul class="hero-highlights">
+        <li>Independent review within 7–10 business days</li>
+        <li>Ingredient safety and sourcing verification</li>
+        <li>Packaging and recycling data required</li>
+      </ul>
+    </div>
+    <figure class="hero-media">
+      <img src="https://images.unsplash.com/photo-1506617420156-8e4536971650?auto=format&fit=crop&q=80&w=774" alt="Form documents beside glass skincare jars and botanical leaves">
+    </figure>
+  </div>
+</header>
+
+<main id="main">
+  <section id="criteria" class="section">
+    <header>
+      <h2>What we need to review your brand</h2>
+      <p>Upload evidence for each category so our editorial team and student researchers can validate claims quickly.</p>
+    </header>
+    <div class="criteria-grid">
+      <article class="impact-card">
+        <h3>Ingredient proof</h3>
+        <p>Provide a full INCI list plus lab screenshots or PDFs. Highlight potential allergens or fragrance disclosures.</p>
+      </article>
+      <article class="impact-card">
+        <h3>Certifications</h3>
+        <p>Link directly to public directories for cruelty-free, vegan, B Corp, Climate Neutral, or EWG Verified badges.</p>
+      </article>
+      <article class="impact-card">
+        <h3>Packaging photos</h3>
+        <p>Include close-ups of materials (glass, aluminum, refill pouches) and any refill or take-back instructions.</p>
+      </article>
+      <article class="impact-card">
+        <h3>Impact receipts</h3>
+        <p>Share donation receipts, supplier audits, or logistics emissions reports that support sustainability claims.</p>
+      </article>
+    </div>
+  </section>
+
+  <section id="submit-form" class="section">
+    <header>
+      <h2>Submission form</h2>
+      <p>We use this information to pre-screen entries before adding them to the live browse experience.</p>
+    </header>
+    <form class="submit-form" method="POST" action="/submit" novalidate>
+      <div class="form-grid">
+        <label>
+          Your name
+          <input type="text" name="submitter_name" value="<%= values.submitter_name || '' %>">
+        </label>
+        <label>
+          Email
+          <input type="email" name="email" value="<%= values.email || '' %>">
+        </label>
+        <label>
+          Role
+          <select name="role">
+            <option value="">Select one</option>
+            <option <%= values.role === 'Student researcher' ? 'selected' : '' %>>Student researcher</option>
+            <option <%= values.role === 'Founder or team member' ? 'selected' : '' %>>Founder or team member</option>
+            <option <%= values.role === 'Investor or advisor' ? 'selected' : '' %>>Investor or advisor</option>
+            <option <%= values.role === 'Customer' ? 'selected' : '' %>>Customer</option>
+          </select>
+        </label>
+        <label>
+          Brand name
+          <input type="text" name="name" value="<%= values.name || '' %>" required>
+          <% if (errors.name) { %><span class="form-error"><%= errors.name %></span><% } %>
+        </label>
+        <label>
+          Official website
+          <input type="url" name="website" value="<%= values.website || '' %>" placeholder="https://">
+          <% if (errors.website) { %><span class="form-error"><%= errors.website %></span><% } %>
+        </label>
+        <label>
+          Country of operations
+          <input type="text" name="country" value="<%= values.country || '' %>" placeholder="Canada, USA, Korea">
+        </label>
+      </div>
+
+      <label>
+        Certifications
+        <div class="cert-input-row">
+          <input type="text" id="cert-input" placeholder="Add certification">
+          <button class="button ghost" type="button" id="add-cert">Add</button>
+        </div>
+        <input type="hidden" id="certifications" name="certifications" value="<%= Array.isArray(values.certifications) ? values.certifications.join(', ') : (values.certifications || '') %>">
+        <div id="cert-tags" class="filter-list"></div>
+      </label>
+
+      <label>
+        Packaging details
+        <textarea name="packaging" rows="3" placeholder="Materials used, refill or mail-back instructions, recycling notes"><%= values.packaging || '' %></textarea>
+      </label>
+
+      <label>
+        Ingredient documentation summary
+        <textarea name="summary" rows="3" placeholder="INCI list + lab PDF link or screenshots" required><%= values.summary || '' %></textarea>
+        <% if (errors.summary) { %><span class="form-error"><%= errors.summary %></span><% } %>
+      </label>
+
+      <div class="form-grid">
+        <label>
+          Price tier
+          <select name="price_tier" required>
+            <option value="">Select one</option>
+            <option value="$" <%= values.price_tier === '$' ? 'selected' : '' %>>$</option>
+            <option value="$$" <%= values.price_tier === '$$' ? 'selected' : '' %>>$$</option>
+            <option value="$$$" <%= values.price_tier === '$$$' ? 'selected' : '' %>>$$$</option>
+          </select>
+          <% if (errors.price_tier) { %><span class="form-error"><%= errors.price_tier %></span><% } %>
+        </label>
+      </div>
+
+      <button type="submit" class="button primary full-width">Submit for review</button>
+    </form>
+  </section>
+
+  <section class="section">
+    <header>
+      <h2>What happens after you submit</h2>
+      <p>Our process keeps the directory transparent and fair for students, founders, and readers.</p>
+    </header>
+    <ol class="timeline">
+      <li>
+        <h3>Review & triage</h3>
+        <p>We check documentation for completeness and flag any missing ingredient or certification evidence.</p>
+      </li>
+      <li>
+        <h3>Lab & supplier verification</h3>
+        <p>Our student researchers cross-reference lab reports, supplier lists, and packaging claims with public databases.</p>
+      </li>
+      <li>
+        <h3>Profile publishing</h3>
+        <p>Approved brands are added to the browse page with filters for certifications, price tiers, and packaging.</p>
+      </li>
+    </ol>
+  </section>
+</main>
+
+<script>
+  // Event-driven DOM: add/remove certification tags
+  (function() {
+    const input = document.getElementById('cert-input');
+    const hidden = document.getElementById('certifications');
+    const tagsWrap = document.getElementById('cert-tags');
+    const addBtn = document.getElementById('add-cert');
+    let tags = (hidden.value || '').split(',').map(t => t.trim()).filter(Boolean);
+
+    function renderTags() {
+      tagsWrap.innerHTML = '';
+      tags.forEach(tag => {
+        const pill = document.createElement('button');
+        pill.type = 'button';
+        pill.className = 'filter-pill primary';
+        pill.textContent = tag;
+        pill.addEventListener('click', () => {
+          tags = tags.filter(t => t !== tag);
+          syncHidden();
+          renderTags();
+        });
+        tagsWrap.appendChild(pill);
+      });
+    }
+
+    function syncHidden() {
+      hidden.value = tags.join(', ');
+    }
+
+    addBtn?.addEventListener('click', () => {
+      const val = (input.value || '').trim();
+      if (!val) return;
+      if (!tags.includes(val)) tags.push(val);
+      input.value = '';
+      syncHidden();
+      renderTags();
+    });
+
+    renderTags();
+  })();
+</script>
+
+<%- include('partials/footer') %>

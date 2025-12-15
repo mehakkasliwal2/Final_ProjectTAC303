@@ -1,0 +1,90 @@
+<%- include('partials/head', { pageTitle: 'Sustainable Beauty Brand Directory', metaDescription: 'Discover transparent, cruelty-free skincare brands with ingredient breakdowns, certification filters, and community insights in the Sustainable Beauty Brand Directory - a curated guide to ethical routines, founder stories, and impact data.' }) %>
+
+<header class="hero" id="top">
+  <%- include('partials/nav', { current: 'home' }) %>
+  <div class="hero-content">
+    <div class="hero-text">
+      <h1>Sustainable Beauty Brand Directory</h1>
+      <p class="lead">A living resource that helps conscious shoppers compare ingredients, certifications, founder missions, and price points before investing in new skincare staples.</p>
+      <div class="hero-ctas">
+        <a class="button primary" href="#brands">Explore featured brands</a>
+        <a class="button ghost" href="/submit">Submit your brand</a>
+      </div>
+      <ul class="hero-highlights">
+        <li>200+ cruelty-free products tracked for launch</li>
+        <li>Filters for certifications, skin goals, and packaging</li>
+        <li>Story-driven brand spotlights and sourcing receipts</li>
+      </ul>
+    </div>
+    <figure class="hero-media">
+      <img src="https://images.unsplash.com/photo-1676803704299-b59cd8fecb7d?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=774" alt="Glass skincare bottles and botanical ingredients on a stone slab">
+    </figure>
+  </div>
+</header>
+
+<main id="main">
+  <section id="mission" class="section">
+    <header>
+      <h2>Mission: remove the guesswork from sustainable skincare</h2>
+    </header>
+    <div class="mission-grid">
+      <article>
+        <h3>Transparency first</h3>
+        <p>Brand write-ups cite ingredient lists, lab results, and third-party certifications so readers can trust every recommendation.</p>
+      </article>
+      <article>
+        <h3>Global perspective</h3>
+        <p>Spotlights highlight founders in Seoul, Lagos, Los Angeles, and London to show how different cultures reinterpret low-waste beauty.</p>
+      </article>
+      <article>
+        <h3>Impact tracking</h3>
+        <p>Each profile logs packaging choices, shipment miles, and give-back promises to compare impact per dollar.</p>
+      </article>
+    </div>
+  </section>
+
+  <section id="brands" class="section">
+    <header>
+      <h2>Real companies already vetted for launch</h2>
+      <p>These sample entries show how the final browse page will combine photography, certification badges, and plain-language summaries.</p>
+    </header>
+    <div class="brand-list">
+      <% brands.forEach(brand => { %>
+        <article class="brand-card">
+          <img src="https://images.unsplash.com/photo-1506617420156-8e4536971650?auto=format&fit=crop&q=80&w=774" alt="Skincare visual for <%= brand.name %>">
+          <div>
+            <h3><%= brand.name %></h3>
+            <p><%= brand.summary %></p>
+            <ul class="brand-meta">
+              <li>Certifications: <%= (brand.certifications || []).join(', ') %></li>
+              <li>Packaging: <%= brand.packaging || 'TBD' %></li>
+              <li>Price tier: <%= brand.price_tier || 'N/A' %></li>
+            </ul>
+          </div>
+        </article>
+      <% }) %>
+    </div>
+  </section>
+
+  <section class="section stories">
+    <header>
+      <h2>Stories that humanize clean beauty</h2>
+    </header>
+    <div class="stories-grid">
+      <article>
+        <h3>Ingredient myth busting</h3>
+        <p>Breaks down common marketing claims like "clean", "natural", or "non-toxic" and pairs them with lab-backed explanations.</p>
+      </article>
+      <article>
+        <h3>Packaging lab notes</h3>
+        <p>Compares refill systems, compostable pumps, and glass-versus-aluminum tradeoffs so readers understand impact.</p>
+      </article>
+      <article>
+        <h3>Community rituals</h3>
+        <p>Collects interviews about how students adapt routines on a budget while still prioritizing ethical sourcing.</p>
+      </article>
+    </div>
+  </section>
+</main>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,15 @@
+<%- include('partials/head', { pageTitle: 'Error | Sustainable Beauty Brand Directory', metaDescription: 'Error page for Sustainable Beauty Brand Directory.' }) %>
+<header class="hero" id="top">
+  <%- include('partials/nav', { current: '' }) %>
+  <div class="hero-content">
+    <div class="hero-text">
+      <h1>Oops!</h1>
+      <p class="lead"><%= message %></p>
+      <div class="hero-ctas">
+        <a class="button primary" href="/">Return home</a>
+        <a class="button ghost" href="/browse">Browse brands</a>
+      </div>
+    </div>
+  </div>
+</header>
+<%- include('partials/footer') %>
