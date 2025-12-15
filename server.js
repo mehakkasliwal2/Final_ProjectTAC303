@@ -25,9 +25,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 const brandImages = {
-  Biossance: 'https://images.unsplash.com/photo-1676803704299-b59cd8fecb7d?auto=format&fit=crop&q=80&w=1200',
+  Biossance: 'https://www.biossance.com/images?url=https://blogscdn.thehut.net/app/uploads/sites/2350/2024/01/4_1_Earth_Month__COVER_1704456840.jpg&auto=avif&width=1200&fit=crop',
   'ILIA Beauty': 'https://iliabeauty.com/cdn/shop/files/WEB-About_Us-_Image_Update_2025-0.jpg?v=1738871646&width=1500',
   'Youth To The People': 'https://blogscdn.thehut.net/app/uploads/sites/1778/2021/12/Blog-700x400_0007_YouthToThePeople_BOTM_3StepSuperfoodStarterKit_HighRes_1638532910.jpg',
+  'FLORENCE BY MILLS': 'https://media.fashionnetwork.com/cdn-cgi/image/fit=contain,width=1000,height=1000,format=auto/m/3b07/09a1/82b4/21df/66ac/5678/b73e/4134/335c/43d0/43d0.jpeg',
   default: 'https://images.unsplash.com/photo-1506617420156-8e4536971650?auto=format&fit=crop&q=80&w=1200'
 };
 
@@ -43,7 +44,8 @@ const sampleBrands = [
     summary: 'Lab-grown squalane skincare backed by EWG verification and Responsible Care commitments.',
     certifications: ['EWG Verified', 'Leaping Bunny'],
     packaging: 'Sugarcane biopolymer, refill pouches',
-    price_tier: '$$'
+    price_tier: '$$',
+    image_url: brandImages.Biossance
   },
   {
     id: 2,
@@ -51,7 +53,8 @@ const sampleBrands = [
     summary: 'Weightless color cosmetics disclosing recycled aluminum percentages and funding take-back programs.',
     certifications: ['B Corp', 'Leaping Bunny'],
     packaging: 'Recycled aluminum, mail-back recycling',
-    price_tier: '$$'
+    price_tier: '$$',
+    image_url: brandImages['ILIA Beauty']
   },
   {
     id: 3,
@@ -59,7 +62,17 @@ const sampleBrands = [
     summary: 'Superfood-powered cleansers brewed weekly in California with transparent supplier maps.',
     certifications: ['Climate Neutral', 'Vegan'],
     packaging: 'Glass bottles, FSC cartons',
-    price_tier: '$$'
+    price_tier: '$$',
+    image_url: brandImages['Youth To The People']
+  },
+  {
+    id: 4,
+    name: 'FLORENCE BY MILLS',
+    summary: 'Vegan makeup and skincare pairing recyclable bottles with Gen Z mental health campaigns.',
+    certifications: ['PETA', 'Clean at Sephora'],
+    packaging: 'Recyclable PET, glass jars',
+    price_tier: '$',
+    image_url: brandImages['FLORENCE BY MILLS']
   }
 ];
 
