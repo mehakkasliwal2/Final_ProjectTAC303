@@ -33,7 +33,8 @@ const brandImages = {
 };
 
 function withBrandImage(brand) {
-  const image_url = brand.image_url || brandImages[brand.name] || brandImages.default;
+  // Prefer curated image mapping per brand name; fall back to DB image_url, then default
+  const image_url = brandImages[brand.name] || brand.image_url || brandImages.default;
   return { ...brand, image_url };
 }
 
