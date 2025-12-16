@@ -38,6 +38,36 @@ function withBrandImage(brand) {
   return { ...brand, image_url };
 }
 
+function buildFilterQuery({ certs = [], packaging = [], price = [] }) {
+  const conditions = [];
+  const params = [];
+
+  if (certs.length) {
+    params.push(certs);
+    conditions.push(
+      `b.id IN (
+        SELECT bc.brand_id
+        FROM brand_certifications bc
+        JOIN certifications c ON c.id = bc.certification_id
+        WHERE c.name = ANY($${params.length})
+      )`
+    );
+  }
+
+  if (packaging.length) {
+    params.push(packaging.map(p => `%${p}%`));
+    conditions.push(`b.packaging ILIKE ANY($${params.length})`);
+  }
+
+  if (price.length) {
+    params.push(price);
+    conditions.push(`b.price_tier = ANY($${params.length})`);
+  }
+
+  const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+  return { where, params };
+}
+
 const sampleBrands = [
   {
     id: 1,
@@ -77,11 +107,21 @@ const sampleBrands = [
   }
 ];
 
-async function getBrands({ limit = 6, offset = 0 } = {}) {
+async function getBrands({ limit = 6, offset = 0, filters = {} } = {}) {
   if (!pool) return { rows: sampleBrands.slice(offset, offset + limit), total: sampleBrands.length };
   const client = await pool.connect();
   try {
-    const totalResult = await client.query('SELECT COUNT(*) AS count FROM brands;');
+    const { filterQuery, params } = buildFilterQuery(filters);
+    const totalResult = await client.query(
+      `SELECT COUNT(*) AS count FROM (
+         SELECT b.id
+         FROM brands b
+         ${filterQuery.where}
+         GROUP BY b.id
+       ) sub;`,
+      params
+    );
+
     const result = await client.query(
       `SELECT b.id, b.name, b.summary, b.packaging, b.price_tier,
               b.image_url,
@@ -89,10 +129,11 @@ async function getBrands({ limit = 6, offset = 0 } = {}) {
        FROM brands b
        LEFT JOIN brand_certifications bc ON bc.brand_id = b.id
        LEFT JOIN certifications c ON c.id = bc.certification_id
+       ${filterQuery.where}
        GROUP BY b.id
        ORDER BY b.created_at DESC
-       LIMIT $1 OFFSET $2;`,
-      [limit, offset]
+       LIMIT $${params.length + 1} OFFSET $${params.length + 2};`,
+      [...params, limit, offset]
     );
     return { rows: result.rows, total: parseInt(totalResult.rows[0].count, 10) };
   } finally {
@@ -269,11 +310,17 @@ app.get('/browse', async (req, res, next) => {
   const limit = 6;
   const offset = (page - 1) * limit;
   try {
-    const { rows, total } = await getBrands({ limit, offset });
+    const selected = {
+      certs: (req.query.cert || '').split(',').map(s => s.trim()).filter(Boolean),
+      packaging: (req.query.packaging || '').split(',').map(s => s.trim()).filter(Boolean),
+      price: (req.query.price || '').split(',').map(s => s.trim()).filter(Boolean),
+      goals: (req.query.goals || '').split(',').map(s => s.trim()).filter(Boolean) // kept for UI state only
+    };
+    const { rows, total } = await getBrands({ limit, offset, filters: selected });
     const brands = rows.map(withBrandImage);
     const certCounts = await getCertificationCounts();
     const pageCount = Math.max(1, Math.ceil(total / limit));
-    res.render('browse', { brands, page, pageCount, certCounts });
+    res.render('browse', { brands, page, pageCount, certCounts, selected });
   } catch (err) {
     next(err);
   }

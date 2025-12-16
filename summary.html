@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Final Project Summary | Sustainable Beauty Brand Directory</title>
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    body { padding: 2rem; background: #F4F1EA; color: #2b2b28; }
+    .summary { max-width: 900px; margin: 0 auto; background: #fff; border: 1px solid #d7d2c5; padding: 2rem; }
+    h1, h2 { color: #0F5132; }
+    ul { margin-top: 0.25rem; }
+    code { background: #f0f0ec; padding: 0 0.2rem; }
+  </style>
+</head>
+<body>
+  <div class="summary">
+    <h1>Final Project Summary</h1>
+    <h2>Topic & Purpose</h2>
+    <p>Directory of sustainable, cruelty-free beauty brands. Users can browse brand cards, see certification counts, and submit/update entries with packaging and sourcing details.</p>
+
+    <h2>How to Use</h2>
+    <ul>
+      <li><strong>Home:</strong> overview and featured brands.</li>
+      <li><strong>Browse:</strong> paginated brand list with edit/delete controls and a certification aggregate table.</li>
+      <li><strong>Submit:</strong> create a brand with validation and dynamic certification tags.</li>
+      <li><strong>Edit/Delete:</strong> from Browse cards.</li>
+    </ul>
+
+    <h2>Admin/Test Credentials</h2>
+    <p>No authentication required (CRUD is open for grading).</p>
+
+    <h2>Data Source</h2>
+    <p>Seed data defined in <code>db/schema.sql</code> (Biossance, ILIA, Youth To The People, FLORENCE BY MILLS, certification seeds). In-memory fallback used when <code>DATABASE_URL</code> is absent.</p>
+
+    <h2>Database Diagram</h2>
+    <p>Tables: <code>brands</code> (1), <code>certifications</code> (N), <code>brand_certifications</code> (N:N). Relationship: many-to-many between brands and certifications via <code>brand_certifications</code>. (Attach screenshot/diagram in submission.)</p>
+
+    <h2>Features Implemented</h2>
+    <ul>
+      <li>Form with validation (regex URL + server-side error rendering).</li>
+      <li>Pagination on <code>/browse</code>.</li>
+      <li>SQL aggregate table (certification → brand count) on <code>/browse</code>.</li>
+      <li>Event-driven DOM manipulation (add/remove certification pills on submit form).</li>
+      <li>Many-to-many relationship (brands ↔ certifications).</li>
+      <li>Full CRUD: create (submit), read (home/browse), update (edit), delete.</li>
+    </ul>
+
+    <h2>Third-Party APIs</h2>
+    <p>None.</p>
+
+    <h2>CSS Frameworks/Templates</h2>
+    <p>Custom CSS only (<code>public/styles.css</code>). No external framework.</p>
+
+    <h2>Deployment URL (Render)</h2>
+    <p>Update with your live URL: <a href="#">https://&lt;your-service&gt;.onrender.com</a></p>
+
+    <h2>Runbook</h2>
+    <ul>
+      <li>Env var: <code>DATABASE_URL</code> (Render Postgres External URL).</li>
+      <li>Build: <code>npm install</code></li>
+      <li>Start: <code>npm run start</code></li>
+      <li>Seed: <code>psql $DATABASE_URL -f db/schema.sql</code> (or run via Node + pg as done locally).</li>
+    </ul>
+  </div>
+</body>
+</html>

@@ -31,13 +31,13 @@
     <div class="filter-panel">
       <article class="filter-group">
         <h3>Certifications</h3>
-        <ul class="filter-list" data-filter-group="certifications">
+        <ul class="filter-list" data-filter-group="certs">
           <li><button class="filter-pill" data-label="EWG Verified">EWG Verified</button></li>
           <li><button class="filter-pill" data-label="Leaping Bunny">Leaping Bunny</button></li>
           <li><button class="filter-pill" data-label="B Corp">B Corp</button></li>
           <li><button class="filter-pill" data-label="Climate Neutral">Climate Neutral</button></li>
         </ul>
-        <div class="filters-note" data-selected="certifications">Selected: none</div>
+        <div class="filters-note" data-selected="certs">Selected: none</div>
       </article>
       <article class="filter-group">
         <h3>Packaging</h3>
@@ -51,12 +51,12 @@
       </article>
       <article class="filter-group">
         <h3>Budget</h3>
-        <ul class="filter-list" data-filter-group="budget">
+        <ul class="filter-list" data-filter-group="price">
           <li><button class="filter-pill" data-label="$">$</button></li>
           <li><button class="filter-pill" data-label="$$">$$</button></li>
           <li><button class="filter-pill" data-label="$$$">$$$</button></li>
         </ul>
-        <div class="filters-note" data-selected="budget">Selected: none</div>
+        <div class="filters-note" data-selected="price">Selected: none</div>
       </article>
       <article class="filter-group">
         <h3>Skin goals</h3>
@@ -134,15 +134,53 @@
 
 <script>
   // DOM manipulation: track selections per filter group and show "Selected" summaries.
+  const selected = {
+    certs: <%- JSON.stringify(selected && selected.certs || []) %>,
+    packaging: <%- JSON.stringify(selected && selected.packaging || []) %>,
+    price: <%- JSON.stringify(selected && selected.price || []) %>,
+    goals: <%- JSON.stringify(selected && selected.goals || []) %>
+  };
+
+  function updateSelectedText(group, summary) {
+    const labels = Array.from(group.querySelectorAll('button.filter-pill.primary')).map(b => b.dataset.label || b.textContent.trim());
+    if (summary) summary.textContent = labels.length ? `Selected: ${labels.join(', ')}` : 'Selected: none';
+  }
+
+  function applyQuery() {
+    const params = new URLSearchParams();
+    if (selected.certs.length) params.set('cert', selected.certs.join(','));
+    if (selected.packaging.length) params.set('packaging', selected.packaging.join(','));
+    if (selected.price.length) params.set('price', selected.price.join(','));
+    if (selected.goals.length) params.set('goals', selected.goals.join(',')); // UI state only
+    window.location.search = params.toString();
+  }
+
   document.querySelectorAll('[data-filter-group]').forEach(group => {
     const groupName = group.dataset.filterGroup;
     const summary = document.querySelector(`[data-selected=\"${groupName}\"]`);
+    // Initialize active state from server
+    const active = selected[groupName] || [];
+    group.querySelectorAll('button.filter-pill').forEach(btn => {
+      const label = btn.dataset.label || btn.textContent.trim();
+      if (active.includes(label)) btn.classList.add('primary');
+    });
+    updateSelectedText(group, summary);
+
     group.addEventListener('click', (e) => {
       const btn = e.target.closest('button.filter-pill');
       if (!btn) return;
+      const label = btn.dataset.label || btn.textContent.trim();
       btn.classList.toggle('primary');
-      const labels = Array.from(group.querySelectorAll('button.filter-pill.primary')).map(b => b.dataset.label || b.textContent.trim());
-      if (summary) summary.textContent = labels.length ? `Selected: ${labels.join(', ')}` : 'Selected: none';
+      const arr = selected[groupName] || [];
+      if (btn.classList.contains('primary')) {
+        if (!arr.includes(label)) arr.push(label);
+      } else {
+        const idx = arr.indexOf(label);
+        if (idx > -1) arr.splice(idx, 1);
+      }
+      selected[groupName] = arr;
+      updateSelectedText(group, summary);
+      applyQuery();
     });
   });
 </script>
