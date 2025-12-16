@@ -34,7 +34,8 @@
     <p>Seed data defined in <code>db/schema.sql</code> (Biossance, ILIA, Youth To The People, FLORENCE BY MILLS, certification seeds). In-memory fallback used when <code>DATABASE_URL</code> is absent.</p>
 
     <h2>Database Diagram</h2>
-    <p>Tables: <code>brands</code> (1), <code>certifications</code> (N), <code>brand_certifications</code> (N:N). Relationship: many-to-many between brands and certifications via <code>brand_certifications</code>. (Attach screenshot/diagram in submission.)</p>
+    <p>ERD exported from pgAdmin showing the many-to-many between <code>brands</code> and <code>certifications</code> via <code>brand_certifications</code>.</p>
+    <img src="Database Diagram.png" alt="Database diagram for brands, certifications, and brand_certifications tables" style="max-width:100%; border: 1px solid #d7d2c5; margin: 1rem 0;">
 
     <h2>Features Implemented</h2>
     <ul>
