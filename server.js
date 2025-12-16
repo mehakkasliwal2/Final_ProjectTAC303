@@ -1,8 +1,10 @@
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import pg from 'pg';
+import multer from 'multer';
 
 dotenv.config();
 
@@ -10,13 +12,86 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
+const uploadDir = path.join(__dirname, 'public', 'uploads');
+
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (_, __, cb) => cb(null, uploadDir),
+  filename: (_, file, cb) => {
+    const ext = path.extname(file.originalname);
+    const base = path.basename(file.originalname, ext).replace(/\s+/g, '-').toLowerCase();
+    cb(null, `${Date.now()}-${base}${ext}`);
+  }
+});
+
+const upload = multer({
+  storage,
+  fileFilter: (_, file, cb) => {
+    if (!file.mimetype.startsWith('image/')) return cb(null, false);
+    cb(null, true);
+  },
+  limits: { fileSize: 5 * 1024 * 1024 }
+});
 
 const pool = process.env.DATABASE_URL
   ? new pg.Pool({
       connectionString: process.env.DATABASE_URL,
-      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+      ssl: { rejectUnauthorized: false },
     })
   : null;
+
+async function cleanupDuplicateBrands() {
+  if (!pool) return;
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query(`
+      WITH ranked AS (
+        SELECT id, LOWER(name) AS lname, ROW_NUMBER() OVER (PARTITION BY LOWER(name) ORDER BY created_at DESC, id DESC) AS rn
+        FROM brands
+      )
+      DELETE FROM brand_certifications bc
+      USING ranked r
+      WHERE bc.brand_id = r.id AND r.rn > 1;
+
+      WITH ranked AS (
+        SELECT id, LOWER(name) AS lname, ROW_NUMBER() OVER (PARTITION BY LOWER(name) ORDER BY created_at DESC, id DESC) AS rn
+        FROM brands
+      )
+      DELETE FROM brands b
+      USING ranked r
+      WHERE b.id = r.id AND r.rn > 1;
+    `);
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Duplicate cleanup failed:', err.message);
+  } finally {
+    client.release();
+  }
+}
+
+async function ensureImageColumn() {
+  if (!pool) return;
+  const client = await pool.connect();
+  try {
+    await client.query('ALTER TABLE brands ADD COLUMN IF NOT EXISTS image_url TEXT;');
+    await client.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_brands_name_ci ON brands (LOWER(name));');
+  } catch (err) {
+    console.error('Schema check failed:', err.message);
+  } finally {
+    client.release();
+  }
+}
+
+if (pool) {
+  cleanupDuplicateBrands()
+    .then(() => ensureImageColumn())
+    .catch(err => console.error('Startup migration error:', err.message));
+}
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -29,12 +104,13 @@ const brandImages = {
   'ilia beauty': 'https://iliabeauty.com/cdn/shop/files/WEB-About_Us-_Image_Update_2025-0.jpg?v=1738871646&width=1500',
   'youth to the people': 'https://blogscdn.thehut.net/app/uploads/sites/1778/2021/12/Blog-700x400_0007_YouthToThePeople_BOTM_3StepSuperfoodStarterKit_HighRes_1638532910.jpg',
   'florence by mills': 'https://media.fashionnetwork.com/cdn-cgi/image/fit=contain,width=1000,height=1000,format=auto/m/3b07/09a1/82b4/21df/66ac/5678/b73e/4134/335c/43d0/43d0.jpeg',
+  'clarins': 'https://www.clarinsusa.com/dw/image/v2/BDBG_PRD/on/demandware.static/-/Sites-clarins-master/default/dw6c1f6dde/images/hi-res/80090711.jpg?sw=1440&sh=1440&sm=fit',
   default: 'https://images.unsplash.com/photo-1506617420156-8e4536971650?auto=format&fit=crop&q=80&w=1200'
 };
 
 function withBrandImage(brand) {
   const key = (brand.name || '').trim().toLowerCase();
-  const image_url = brandImages[key] || brand.image_url || brandImages.default;
+  const image_url = brand.image_url || brandImages[key] || brandImages.default;
   return { ...brand, image_url };
 }
 
@@ -107,16 +183,40 @@ const sampleBrands = [
   }
 ];
 
+const homeSpotlight = [
+  {
+    name: 'Biossance',
+    summary: 'Lab-grown squalane skincare backed by EWG verification and Responsible Care commitments.',
+    certifications: ['EWG Verified', 'Leaping Bunny'],
+    packaging: 'Sugarcane biopolymer, refill pouches',
+    price_tier: '$$'
+  },
+  {
+    name: 'ILIA Beauty',
+    summary: 'Weightless color cosmetics disclosing recycled aluminum percentages and funding take-back programs.',
+    certifications: ['B Corp', 'Leaping Bunny'],
+    packaging: 'Recycled aluminum, mail-back recycling',
+    price_tier: '$$'
+  },
+  {
+    name: 'Youth To The People',
+    summary: 'Superfood-powered cleansers brewed weekly in California with transparent supplier maps.',
+    certifications: ['Climate Neutral', 'Vegan'],
+    packaging: 'Glass bottles, FSC cartons',
+    price_tier: '$$'
+  }
+];
+
 async function getBrands({ limit = 6, offset = 0, filters = {} } = {}) {
   if (!pool) return { rows: sampleBrands.slice(offset, offset + limit), total: sampleBrands.length };
   const client = await pool.connect();
   try {
-    const { filterQuery, params } = buildFilterQuery(filters);
+    const { where, params } = buildFilterQuery(filters);
     const totalResult = await client.query(
       `SELECT COUNT(*) AS count FROM (
          SELECT b.id
          FROM brands b
-         ${filterQuery.where}
+         ${where}
          GROUP BY b.id
        ) sub;`,
       params
@@ -129,7 +229,7 @@ async function getBrands({ limit = 6, offset = 0, filters = {} } = {}) {
        FROM brands b
        LEFT JOIN brand_certifications bc ON bc.brand_id = b.id
        LEFT JOIN certifications c ON c.id = bc.certification_id
-       ${filterQuery.where}
+       ${where}
        GROUP BY b.id
        ORDER BY b.created_at DESC
        LIMIT $${params.length + 1} OFFSET $${params.length + 2};`,
@@ -192,10 +292,10 @@ async function createBrand(payload) {
   try {
     await client.query('BEGIN');
     const brandResult = await client.query(
-      `INSERT INTO brands(name, summary, packaging, price_tier, website, country)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO brands(name, summary, packaging, price_tier, website, country, image_url)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING id;`,
-      [payload.name, payload.summary, payload.packaging, payload.price_tier, payload.website, payload.country]
+      [payload.name, payload.summary, payload.packaging, payload.price_tier, payload.website, payload.country, payload.image_url]
     );
     const brandId = brandResult.rows[0].id;
 
@@ -239,9 +339,9 @@ async function updateBrand(id, payload) {
     await client.query('BEGIN');
     await client.query(
       `UPDATE brands
-       SET name = $1, summary = $2, packaging = $3, price_tier = $4, website = $5, country = $6
-       WHERE id = $7;`,
-      [payload.name, payload.summary, payload.packaging, payload.price_tier, payload.website, payload.country, id]
+       SET name = $1, summary = $2, packaging = $3, price_tier = $4, website = $5, country = $6, image_url = $7
+       WHERE id = $8;`,
+      [payload.name, payload.summary, payload.packaging, payload.price_tier, payload.website, payload.country, payload.image_url, id]
     );
     await client.query('DELETE FROM brand_certifications WHERE brand_id = $1;', [id]);
     if (payload.certifications && payload.certifications.length) {
@@ -297,8 +397,7 @@ function validateBrandInput(body) {
 
 app.get('/', async (req, res, next) => {
   try {
-    const { rows } = await getBrands({ limit: 3, offset: 0 });
-    const brands = rows.map(withBrandImage);
+    const brands = homeSpotlight.map(withBrandImage);
     res.render('home', { brands });
   } catch (err) {
     next(err);
@@ -330,19 +429,21 @@ app.get('/submit', (req, res) => {
   res.render('submit', { errors: {}, values: {} });
 });
 
-app.post('/submit', async (req, res, next) => {
+app.post('/submit', upload.single('image_file'), async (req, res, next) => {
   const { name, summary, packaging, price_tier, website, country, certifications } = req.body;
   const certList = Array.isArray(certifications)
     ? certifications.filter(Boolean)
     : (certifications || '').split(',').map(c => c.trim()).filter(Boolean);
+  const normalizedImageUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
   const errors = validateBrandInput({ name, summary, price_tier, website });
-  if (Object.keys(errors).length) {
-    return res.status(400).render('submit', { errors, values: req.body });
+  if (Object.keys(errors).length || (req.file === undefined && req.body.image_file)) {
+    if (req.file) fs.unlink(path.join(uploadDir, req.file.filename), () => {});
+    return res.status(400).render('submit', { errors, values: { ...req.body } });
   }
 
   try {
-    await createBrand({ name, summary, packaging, price_tier, website, country, certifications: certList });
+    await createBrand({ name, summary, packaging, price_tier, website, country, image_url: normalizedImageUrl, certifications: certList });
     res.redirect('/browse');
   } catch (err) {
     next(err);
@@ -359,19 +460,21 @@ app.get('/brands/:id/edit', async (req, res, next) => {
   }
 });
 
-app.post('/brands/:id/edit', async (req, res, next) => {
+app.post('/brands/:id/edit', upload.single('image_file'), async (req, res, next) => {
   const { name, summary, packaging, price_tier, website, country, certifications } = req.body;
   const certList = Array.isArray(certifications)
     ? certifications.filter(Boolean)
     : (certifications || '').split(',').map(c => c.trim()).filter(Boolean);
+  const normalizedImageUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
   const errors = validateBrandInput({ name, summary, price_tier, website });
   if (Object.keys(errors).length) {
+    if (req.file) fs.unlink(path.join(uploadDir, req.file.filename), () => {});
     return res.status(400).render('edit', { errors, values: { ...req.body, certifications }, id: req.params.id });
   }
 
   try {
-    await updateBrand(req.params.id, { name, summary, packaging, price_tier, website, country, certifications: certList });
+    await updateBrand(req.params.id, { name, summary, packaging, price_tier, website, country, image_url: normalizedImageUrl, certifications: certList });
     res.redirect('/browse');
   } catch (err) {
     next(err);

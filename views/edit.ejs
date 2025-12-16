@@ -20,7 +20,7 @@
       <h2>Brand details</h2>
       <p>Make edits and save. Removing certifications is supported via the list below.</p>
     </header>
-    <form class="submit-form" method="POST" action="/brands/<%= id %>/edit" novalidate>
+    <form class="submit-form" method="POST" action="/brands/<%= id %>/edit" enctype="multipart/form-data" novalidate>
       <div class="form-grid">
         <label>
           Brand name
@@ -48,6 +48,15 @@
         <textarea name="packaging" rows="3" placeholder="Materials used, refill or mail-back instructions, recycling notes"><%= values.packaging || '' %></textarea>
       </label>
 
+      <fieldset class="image-fieldset">
+        <legend>Brand image</legend>
+        <p class="muted">Upload a new file to refresh the visual on the browse cards.</p>
+        <label>
+          Upload image file
+          <input type="file" name="image_file" id="image_file" accept="image/*">
+        </label>
+      </fieldset>
+
       <label>
         Ingredient documentation summary
         <textarea name="summary" rows="3" placeholder="INCI list + lab PDF link or screenshots" required><%= values.summary || '' %></textarea>
@@ -71,5 +80,13 @@
     </form>
   </section>
 </main>
+
+<script>
+  // Image selection/upload preview for edit page
+  (function() {
+    const fileInput = document.getElementById('image_file');
+    fileInput?.addEventListener('change', () => {});
+  })();
+</script>
 
 <%- include('partials/footer') %>

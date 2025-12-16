@@ -69,6 +69,18 @@
         <div class="filters-note" data-selected="goals">Selected: none</div>
       </article>
     </div>
+    <div class="filter-results">
+      <p class="muted"><strong><%= brands.length %></strong> brands match these filters.</p>
+      <div>
+        <% if (brands.length) { %>
+          <% brands.forEach(brand => { %>
+            <span class="brand-chip"><%= brand.name %></span>
+          <% }) %>
+        <% } else { %>
+          <span class="brand-chip">No matches yet</span>
+        <% } %>
+      </div>
+    </div>
   </section>
 
   <section class="section">

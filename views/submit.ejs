@@ -53,7 +53,7 @@
       <h2>Submission form</h2>
       <p>Entries are saved immediately to the live browse page once submitted.</p>
     </header>
-    <form class="submit-form" method="POST" action="/submit" novalidate>
+    <form class="submit-form" method="POST" action="/submit" enctype="multipart/form-data" novalidate>
       <div class="form-grid">
         <label>
           Your name
@@ -103,6 +103,18 @@
         Packaging details
         <textarea name="packaging" rows="3" placeholder="Materials used, refill or mail-back instructions, recycling notes"><%= values.packaging || '' %></textarea>
       </label>
+
+      <fieldset class="image-fieldset">
+        <legend>Brand image</legend>
+        <p class="muted">Upload your own pack shot to show on the browse cards.</p>
+        <label>
+          Upload image file
+          <input type="file" name="image_file" id="image_file" accept="image/*">
+        </label>
+        <div class="image-note">
+          <p class="muted">If the upload fails, the card will default to a placeholder image.</p>
+        </div>
+      </fieldset>
 
       <label>
         Ingredient documentation summary
@@ -188,6 +200,12 @@
     });
 
     renderTags();
+  })();
+
+  // Image selection/upload preview
+  (function() {
+    const fileInput = document.getElementById('image_file');
+    fileInput?.addEventListener('change', () => {});
   })();
 </script>
 
