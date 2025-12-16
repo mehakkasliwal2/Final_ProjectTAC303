@@ -20,7 +20,7 @@
       <h2>Brand details</h2>
       <p>Make edits and save. Removing certifications is supported via the list below.</p>
     </header>
-    <form class="submit-form" method="POST" action="/brands/<%= id %>/edit" enctype="multipart/form-data" novalidate>
+    <form class="submit-form" method="POST" action="/brands/<%= id %>/edit" novalidate>
       <div class="form-grid">
         <label>
           Brand name
@@ -50,10 +50,11 @@
 
       <fieldset class="image-fieldset">
         <legend>Brand image</legend>
-        <p class="muted">Upload a new file to refresh the visual on the browse cards.</p>
+        <p class="muted">Paste a hosted image URL (CDN, product page, etc.) to refresh the visual on the browse cards.</p>
         <label>
-          Upload image file
-          <input type="file" name="image_file" id="image_file" accept="image/*">
+          Image URL
+          <input type="url" name="image_url" id="image_url" value="<%= values.image_url || '' %>" placeholder="https://">
+          <% if (errors.image_url) { %><span class="form-error"><%= errors.image_url %></span><% } %>
         </label>
       </fieldset>
 
@@ -82,11 +83,6 @@
 </main>
 
 <script>
-  // Image selection/upload preview for edit page
-  (function() {
-    const fileInput = document.getElementById('image_file');
-    fileInput?.addEventListener('change', () => {});
-  })();
 </script>
 
 <%- include('partials/footer') %>

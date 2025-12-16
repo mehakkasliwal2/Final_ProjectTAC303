@@ -53,7 +53,7 @@
       <h2>Submission form</h2>
       <p>Entries are saved immediately to the live browse page once submitted.</p>
     </header>
-    <form class="submit-form" method="POST" action="/submit" enctype="multipart/form-data" novalidate>
+    <form class="submit-form" method="POST" action="/submit" novalidate>
       <div class="form-grid">
         <label>
           Your name
@@ -106,14 +106,12 @@
 
       <fieldset class="image-fieldset">
         <legend>Brand image</legend>
-        <p class="muted">Upload your own pack shot to show on the browse cards.</p>
+        <p class="muted">Paste a hosted image URL (CDN, product page, etc.) to show on the browse cards.</p>
         <label>
-          Upload image file
-          <input type="file" name="image_file" id="image_file" accept="image/*">
+          Image URL
+          <input type="url" name="image_url" id="image_url" value="<%= values.image_url || '' %>" placeholder="https://">
+          <% if (errors.image_url) { %><span class="form-error"><%= errors.image_url %></span><% } %>
         </label>
-        <div class="image-note">
-          <p class="muted">If the upload fails, the card will default to a placeholder image.</p>
-        </div>
       </fieldset>
 
       <label>
@@ -202,11 +200,6 @@
     renderTags();
   })();
 
-  // Image selection/upload preview
-  (function() {
-    const fileInput = document.getElementById('image_file');
-    fileInput?.addEventListener('change', () => {});
-  })();
 </script>
 
 <%- include('partials/footer') %>

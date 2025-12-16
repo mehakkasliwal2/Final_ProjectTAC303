@@ -4,7 +4,6 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import pg from 'pg';
-import multer from 'multer';
 
 dotenv.config();
 
@@ -17,24 +16,6 @@ const uploadDir = path.join(__dirname, 'public', 'uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
-
-const storage = multer.diskStorage({
-  destination: (_, __, cb) => cb(null, uploadDir),
-  filename: (_, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const base = path.basename(file.originalname, ext).replace(/\s+/g, '-').toLowerCase();
-    cb(null, `${Date.now()}-${base}${ext}`);
-  }
-});
-
-const upload = multer({
-  storage,
-  fileFilter: (_, file, cb) => {
-    if (!file.mimetype.startsWith('image/')) return cb(null, false);
-    cb(null, true);
-  },
-  limits: { fileSize: 5 * 1024 * 1024 }
-});
 
 const pool = process.env.DATABASE_URL
   ? new pg.Pool({
@@ -391,6 +372,7 @@ function validateBrandInput(body) {
   if (!body.name || body.name.trim().length < 2) errors.name = 'Brand name must be at least 2 characters.';
   if (!body.summary || body.summary.trim().length < 10) errors.summary = 'Summary should be at least 10 characters.';
   if (body.website && !urlRegex.test(body.website.trim())) errors.website = 'Website must be a valid URL starting with http(s).';
+  if (body.image_url && !urlRegex.test(body.image_url.trim())) errors.image_url = 'Image must be a valid URL starting with http(s).';
   if (!body.price_tier) errors.price_tier = 'Select a price tier.';
   return errors;
 }
@@ -429,16 +411,15 @@ app.get('/submit', (req, res) => {
   res.render('submit', { errors: {}, values: {} });
 });
 
-app.post('/submit', upload.single('image_file'), async (req, res, next) => {
+app.post('/submit', async (req, res, next) => {
   const { name, summary, packaging, price_tier, website, country, certifications } = req.body;
   const certList = Array.isArray(certifications)
     ? certifications.filter(Boolean)
     : (certifications || '').split(',').map(c => c.trim()).filter(Boolean);
-  const normalizedImageUrl = req.file ? `/uploads/${req.file.filename}` : null;
+  const normalizedImageUrl = (req.body.image_url || '').trim() || null;
 
   const errors = validateBrandInput({ name, summary, price_tier, website });
-  if (Object.keys(errors).length || (req.file === undefined && req.body.image_file)) {
-    if (req.file) fs.unlink(path.join(uploadDir, req.file.filename), () => {});
+  if (Object.keys(errors).length) {
     return res.status(400).render('submit', { errors, values: { ...req.body } });
   }
 
@@ -460,16 +441,15 @@ app.get('/brands/:id/edit', async (req, res, next) => {
   }
 });
 
-app.post('/brands/:id/edit', upload.single('image_file'), async (req, res, next) => {
+app.post('/brands/:id/edit', async (req, res, next) => {
   const { name, summary, packaging, price_tier, website, country, certifications } = req.body;
   const certList = Array.isArray(certifications)
     ? certifications.filter(Boolean)
     : (certifications || '').split(',').map(c => c.trim()).filter(Boolean);
-  const normalizedImageUrl = req.file ? `/uploads/${req.file.filename}` : null;
+  const normalizedImageUrl = (req.body.image_url || '').trim() || null;
 
   const errors = validateBrandInput({ name, summary, price_tier, website });
   if (Object.keys(errors).length) {
-    if (req.file) fs.unlink(path.join(uploadDir, req.file.filename), () => {});
     return res.status(400).render('edit', { errors, values: { ...req.body, certifications }, id: req.params.id });
   }
 
